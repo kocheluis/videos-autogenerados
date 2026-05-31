@@ -25,6 +25,7 @@ data/
 node_modules/
 render/out/
 render/.remotion/
+render/public/
 
 # ComfyUI (si se clona dentro)
 third_party/ComfyUI/

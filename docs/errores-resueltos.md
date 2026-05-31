@@ -12,6 +12,7 @@ nuevo**, añade una entrada al final con la plantilla.
 | 003 | 2026-05-31 | core/pipeline/stages/s02_script | Narración demasiado corta (33s vs 150s objetivo) |
 | 004 | 2026-05-31 | caché HuggingFace (D:) | `model.bin incomplete` tras mover caché con robocopy (symlinks rotos) |
 | 005 | 2026-05-31 | .venv (torch) | ComfyUI requirements degradó torch a CPU (CUDA False) |
+| 006 | 2026-05-31 | s09_render (Remotion) | 404/EncodingError: assets en public/{slug}/{slug} (doble) |
 
 ---
 
@@ -81,6 +82,21 @@ nuevo**, añade una entrada al final con la plantilla.
   `torch.cuda.is_available()`. Idealmente instalar requirements de ComfyUI con `--no-deps`, o
   reinstalar el torch cu124 al final. Considerar un venv separado para ComfyUI si reincide.
 - **Archivos:** `.venv`
+
+---
+
+## 006 — Remotion 404 / EncodingError al cargar imágenes
+- **Componente(s):** `core/pipeline/stages/s09_render.py`
+- **Síntoma:** render Remotion falla con `404 Not Found` y `EncodingError: The source image
+  cannot be decoded` para `public/{slug}/scenes/NN/keyframe.png`.
+- **Causa raíz:** se copiaban los assets a `render/public/{slug}/{slug}/...` (slug duplicado)
+  porque `public_dir` ya incluía el slug y el `rel` lo repetía; `staticFile("{slug}/...")`
+  buscaba `public/{slug}/...` (un solo slug) → no existía.
+- **Fix:** usar `public_root = render/public` como base y `rel = "{slug}/..."` (un solo slug);
+  limpiar solo `public/{slug}` antes de copiar.
+- **Check preventivo:** la ruta física `render/public/<rel>` debe coincidir exactamente con
+  `staticFile(rel)`. Probar con `--dry-run` y verificar 1 ruta antes del render completo.
+- **Archivos:** `core/pipeline/stages/s09_render.py`
 
 ---
 
