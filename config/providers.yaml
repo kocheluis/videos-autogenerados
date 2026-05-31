@@ -1,0 +1,78 @@
+# Selección de implementación por capa (Strategy + Factory).
+# Cambiar de local a cloud es editar este archivo — el pipeline no se toca.
+#
+# REGLA DE MONETIZACIÓN: solo modelos con licencia COMERCIAL. Cada provider declara su
+# `license: {name, commercial, source}`. tests/test_licenses.py falla si algún provider
+# activo no es comercial o si aparece un modelo de la lista negra (flux1-dev, xtts).
+
+llm:
+  provider: ollama
+  ollama:
+    license: { name: "Apache-2.0", commercial: true, source: "Qwen/Qwen2.5-14B-Instruct" }
+    model: "qwen2.5:14b-instruct-q4_K_M"
+    fallback_model: "llama3.1:8b-instruct-q4_K_M"
+    temperature: 0.7
+
+image:
+  provider: comfyui_sdxl            # PRIMARIO comercial (OpenRAIL++, LoRA más maduro)
+  comfyui_sdxl:
+    license: { name: "OpenRAIL++-M", commercial: true, source: "stabilityai/stable-diffusion-xl-base-1.0" }
+    workflow: tools/comfy_graphs/scene_image_sdxl_instantid.json
+    checkpoint: "sd_xl_base_1.0.safetensors"
+    style_lora: "needle_felt_crochet_sdxl.safetensors"
+    consistency: instantid          # InstantID/IPAdapter para consistencia facial
+    steps: 30
+    cfg: 6.0
+  # Alternativa Apache (rápida, comercial). NO usar flux1-dev (no comercial).
+  comfyui_flux_schnell:
+    license: { name: "Apache-2.0", commercial: true, source: "black-forest-labs/FLUX.1-schnell" }
+    workflow: tools/comfy_graphs/scene_image_flux_schnell.json
+    checkpoint: "flux1-schnell.safetensors"
+    style_lora: "needle_felt_crochet_flux.safetensors"
+    consistency: pulid
+
+i2v:
+  provider: comfyui_ltx            # primario por velocidad
+  comfyui_ltx:
+    license: { name: "LTX Community (<$10M)", commercial: true, source: "Lightricks/LTX-Video" }
+    workflow: tools/comfy_graphs/scene_i2v_ltx.json
+    model: "ltx-video.safetensors"
+    frames: 100                    # ~4 s @ 25 fps
+  comfyui_wan:                     # fallback por calidad de movimiento
+    license: { name: "Apache-2.0", commercial: true, source: "Wan-AI/Wan2.2-TI2V-5B" }
+    workflow: tools/comfy_graphs/scene_i2v_wan.json
+    model: "wan2.2-ti2v-5b.safetensors"
+
+upscale:
+  provider: realesrgan
+  realesrgan:
+    license: { name: "BSD-3-Clause", commercial: true, source: "xinntao/Real-ESRGAN" }
+    model: "RealESRGAN_x4plus"
+    target_long_side: 1920
+
+tts:
+  provider: kokoro                 # es, Apache, ligero — por defecto
+  kokoro:
+    license: { name: "Apache-2.0", commercial: true, source: "hexgrad/Kokoro-82M" }
+    voice: "ef_dora"
+  chatterbox:                      # para clonar voz propia (MIT)
+    license: { name: "MIT", commercial: true, source: "resemble-ai/chatterbox" }
+    language: es
+    speaker_wav: ""                # ruta a voz de referencia (opcional)
+  # xtts: PROHIBIDO (CPML no comercial) — no incluir.
+
+asr:
+  provider: faster_whisper
+  faster_whisper:
+    license: { name: "MIT", commercial: true, source: "SYSTRAN/faster-whisper" }
+    model_size: medium
+    language: es
+    device: cuda
+    compute_type: float16
+
+publish:
+  # Semi-manual al inicio: YouTube auto; el resto exporta paquete para subida manual.
+  youtube:   { provider: youtube_api, enabled: true,  privacy: private }
+  tiktok:    { provider: manual_export, enabled: false }   # requiere auditoría (2-6 semanas)
+  instagram: { provider: manual_export, enabled: false }
+  facebook:  { provider: manual_export, enabled: false }

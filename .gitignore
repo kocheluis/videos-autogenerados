@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Datos generados / pesados
+assets/
+models_cache/
+data/
+*.sqlite
+*.sqlite3
+*.db
+*.wav
+*.mp4
+*.png
+!docs/**/*.png
+
+# Node / Remotion
+node_modules/
+render/out/
+render/.remotion/
+
+# ComfyUI (si se clona dentro)
+third_party/ComfyUI/
+
+# WAT: secretos e intermedios
+.env
+credentials.json
+token.json
+.tmp/
+
+# Logs
+*.log
+logs/
+
+# OS / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,32 @@
+name: parenting_primerizos
+source_file: Prueba_padres_primerizos.mp4
+format:
+  width: 1080
+  height: 1920
+  fps: 25.0
+  duration_s: 152.59
+  aspect: 1080x1920
+pacing:
+  hard_cuts: 8
+  approx_shots: 9
+  avg_shot_seconds: 17.0
+  recommended_clip_seconds: 6
+palette:
+- '#664026'
+- '#281e17'
+- '#a07655'
+- '#515c5a'
+- '#d0bb9e'
+style_lock:
+  description: needle-felted wool / crochet amigurumi characters, soft yarn texture,
+    rosy cheeks, warm cinematic lighting, shallow depth of field, with glowing 3D
+    anatomical inserts and golden particles
+captions:
+  style: word_by_word
+  color: '#ffffff'
+  outline: true
+  position: lower_center
+audio:
+  channels: 2
+  sample_rate: '44100'
+  note: Voz en off cálida en es-LA; clonar con XTTS desde voz propia/licenciada.

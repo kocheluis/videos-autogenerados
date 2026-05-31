@@ -1,0 +1,26 @@
+# Reglas de formato y metadata/SEO por plataforma.
+# El LLM genera título/descripción/hashtags respetando estos límites.
+
+youtube:
+  variant: master           # 9:16 para Shorts
+  title_max: 100
+  description_max: 5000
+  tags_max: 15
+  required_hashtags: ["#Shorts"]
+  category: "Education"
+
+instagram:
+  variant: master           # Reels 9:16
+  caption_max: 2200
+  hashtags_max: 30
+  cover_from: thumbnail
+
+facebook:
+  variant: master           # Reels 9:16
+  caption_max: 2200
+
+tiktok:
+  variant: master
+  caption_max: 2200
+  hashtags_max: 10
+  notes: "Requiere auditoría de Content Posting API; sin auditar los posts son privados (SELF_ONLY)."

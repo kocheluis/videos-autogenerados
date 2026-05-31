@@ -1,0 +1,42 @@
+# Configuración global del sistema.
+# Rutas relativas a la raíz del proyecto salvo que sean absolutas.
+
+paths:
+  assets_dir: assets
+  models_cache: models_cache
+  database_url: "sqlite:///data/app.sqlite3"
+  comfyui_dir: third_party/ComfyUI
+  remotion_dir: render
+
+# Presupuesto y serialización de GPU (RTX 3080 Ti, 12 GB).
+gpu:
+  total_vram_mb: 12288
+  budget_mb: 11000          # objetivo por etapa; nunca cargar 2 modelos pesados a la vez
+  serialize: true           # worker único, un modelo grande en VRAM a la vez
+  lock_file: data/gpu.lock
+
+# Servicios locales que el orquestador arranca/para por fase.
+services:
+  ollama:
+    base_url: "http://127.0.0.1:11434"
+    keep_alive: 0           # descarga el modelo de VRAM apenas termina
+  comfyui:
+    base_url: "http://127.0.0.1:8188"
+    extra_args: ["--medvram"]
+
+# Formato objetivo del video (derivado del referente).
+video:
+  master:
+    width: 1080
+    height: 1920
+    fps: 25
+  target_duration_s: 150
+  i2v:
+    clip_seconds: 4         # duración por toma animada
+    gen_resolution: 704     # lado largo de generación i2v (luego upscale a 1080)
+  derived:
+    - { name: square,    width: 1080, height: 1080 }
+    - { name: landscape, width: 1920, height: 1080 }
+
+language: es
+default_style_preset: parenting_primerizos
