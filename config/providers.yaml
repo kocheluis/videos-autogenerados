@@ -17,7 +17,8 @@ image:
   provider: comfyui_sdxl            # PRIMARIO comercial (OpenRAIL++, LoRA más maduro)
   comfyui_sdxl:
     license: { name: "OpenRAIL++-M", commercial: true, source: "stabilityai/stable-diffusion-xl-base-1.0" }
-    workflow: tools/comfy_graphs/scene_image_sdxl_instantid.json
+    workflow: tools/comfy_graphs/scene_image_sdxl.json          # base text2img (InstantID/LoRA: fase siguiente)
+    workflow_instantid: tools/comfy_graphs/scene_image_sdxl_instantid.json
     checkpoint: "sd_xl_base_1.0.safetensors"
     style_lora: "needle_felt_crochet_sdxl.safetensors"
     consistency: instantid          # InstantID/IPAdapter para consistencia facial

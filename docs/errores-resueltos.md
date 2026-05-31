@@ -11,6 +11,7 @@ nuevo**, añade una entrada al final con la plantilla.
 | 002 | 2026-05-31 | core/schemas (Scene) | LLM devuelve `motion_preset` vacío/ inválido |
 | 003 | 2026-05-31 | core/pipeline/stages/s02_script | Narración demasiado corta (33s vs 150s objetivo) |
 | 004 | 2026-05-31 | caché HuggingFace (D:) | `model.bin incomplete` tras mover caché con robocopy (symlinks rotos) |
+| 005 | 2026-05-31 | .venv (torch) | ComfyUI requirements degradó torch a CPU (CUDA False) |
 
 ---
 
@@ -65,6 +66,21 @@ nuevo**, añade una entrada al final con la plantilla.
   método que preserve symlinks; tras cualquier mudanza, correr un tool que cargue cada modelo y
   verificar exit 0. `.env` del proyecto fija `HF_HOME`/`HF_HUB_CACHE`/`INSIGHTFACE_HOME`/`TORCH_HOME` a D:.
 - **Archivos:** `.env`, cachés en `D:\AI\`
+
+---
+
+## 005 — ComfyUI degradó torch a CPU (CUDA False)
+- **Componente(s):** `.venv` compartido (torch), instalación de ComfyUI
+- **Síntoma:** tras `pip install -r ComfyUI/requirements.txt`, `torch.cuda.is_available()` pasó a
+  False (`torch 2.12.0+cpu`); se perdió la GPU para Kokoro/Whisper/ComfyUI.
+- **Causa raíz:** `requirements.txt` de ComfyUI trae `torch` sin pin; pip instaló la rueda CPU
+  de PyPI (versión más alta) sobre el build `cu124`.
+- **Fix:** `pip uninstall -y torch torchvision torchaudio` y reinstalar desde el índice CUDA:
+  `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124`.
+- **Check preventivo:** tras instalar deps de ComfyUI o de cualquier custom node, verificar
+  `torch.cuda.is_available()`. Idealmente instalar requirements de ComfyUI con `--no-deps`, o
+  reinstalar el torch cu124 al final. Considerar un venv separado para ComfyUI si reincide.
+- **Archivos:** `.venv`
 
 ---
 
