@@ -9,6 +9,7 @@ nuevo**, añade una entrada al final con la plantilla.
 |---|-------|-----------|----------------|
 | 001 | 2026-05-31 | tools/generate_script, ollama_provider | Ollama 404 al generar guion |
 | 002 | 2026-05-31 | core/schemas (Scene) | LLM devuelve `motion_preset` vacío/ inválido |
+| 003 | 2026-05-31 | core/pipeline/stages/s02_script | Narración demasiado corta (33s vs 150s objetivo) |
 
 ---
 
@@ -33,6 +34,20 @@ nuevo**, añade una entrada al final con la plantilla.
 - **Check preventivo:** los presets válidos viven en `Bible.motion_presets`; mantener el
   validador sincronizado con esas claves.
 - **Archivos:** `core/schemas.py`
+
+---
+
+## 003 — Narración demasiado corta vs. duración objetivo
+- **Componente(s):** `core/pipeline/stages/s02_script.py` (`_prompt`)
+- **Síntoma:** con 25 escenas, la narración total dio ~33 s / 82 palabras para un objetivo de
+  150 s. El video saldría mucho más corto que lo pedido.
+- **Causa raíz:** el prompt pedía muchas escenas pero no exigía longitud por escena; el LLM
+  produjo frases telegráficas (~3 palabras/escena).
+- **Fix:** acotar nº de escenas (10-18), fijar ~2.6 palabras/seg, exigir ~N palabras por escena
+  y ~`total` palabras de narración en el prompt.
+- **Check preventivo:** tras `generate_script`, validar que `len(narration.split()) ≈ target_s*2.6`
+  (±20%); si no, regenerar o subir la exigencia de palabras.
+- **Archivos:** `core/pipeline/stages/s02_script.py`
 
 ---
 

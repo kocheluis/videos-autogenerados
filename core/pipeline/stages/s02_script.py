@@ -22,18 +22,23 @@ SYSTEM = (
 
 
 def _prompt(brief: Brief, preset: dict) -> str:
-    clip_s = (preset.get("pacing", {}) or {}).get("recommended_clip_seconds", 5)
-    n = max(8, round(brief.target_duration_s / max(clip_s, 3)))
+    # ~2.6 palabras/segundo es un ritmo natural de narración en es-LA.
+    clip_s = max((preset.get("pacing", {}) or {}).get("recommended_clip_seconds", 6), 6)
+    n = max(10, min(round(brief.target_duration_s / clip_s), 18))
+    wps = round(clip_s * 2.6)
+    total = round(brief.target_duration_s * 2.6)
     return (
         f"Tema: {brief.topic}\n"
         f"Audiencia: {brief.audience}\n"
-        f"Duración objetivo: {brief.target_duration_s} s (~{n} escenas de ~{clip_s} s).\n\n"
+        f"Duración objetivo: {brief.target_duration_s} s → {n} escenas de ~{clip_s} s.\n"
+        f"IMPORTANTE de longitud: cada 'narration_text' debe tener ~{wps} palabras "
+        f"(1-2 frases completas y naturales en es-LA), NO frases telegráficas. "
+        f"La narración TOTAL debe rondar las {total} palabras para llenar la duración.\n\n"
         "Devuelve SOLO un JSON con esta forma:\n"
         '{ "title": str, "hook": str, "scenes": [ '
         '{ "idx": int, "narration_text": str, "image_prompt": str, '
         '"motion_preset": "subtle_push_in"|"blink_gesture"|"glow_pulse", '
-        '"duration_s": number, "on_screen_note": str } ] }\n'
-        "La narración debe sumar la duración objetivo a ritmo de lectura natural."
+        '"duration_s": number, "on_screen_note": str } ] }'
     )
 
 
