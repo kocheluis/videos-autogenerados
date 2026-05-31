@@ -10,6 +10,7 @@ nuevo**, añade una entrada al final con la plantilla.
 | 001 | 2026-05-31 | tools/generate_script, ollama_provider | Ollama 404 al generar guion |
 | 002 | 2026-05-31 | core/schemas (Scene) | LLM devuelve `motion_preset` vacío/ inválido |
 | 003 | 2026-05-31 | core/pipeline/stages/s02_script | Narración demasiado corta (33s vs 150s objetivo) |
+| 004 | 2026-05-31 | caché HuggingFace (D:) | `model.bin incomplete` tras mover caché con robocopy (symlinks rotos) |
 
 ---
 
@@ -48,6 +49,22 @@ nuevo**, añade una entrada al final con la plantilla.
 - **Check preventivo:** tras `generate_script`, validar que `len(narration.split()) ≈ target_s*2.6`
   (±20%); si no, regenerar o subir la exigencia de palabras.
 - **Archivos:** `core/pipeline/stages/s02_script.py`
+
+---
+
+## 004 — `model.bin is incomplete` tras mover la caché de HuggingFace
+- **Componente(s):** caché HF en `D:\AI\huggingface\hub` (faster-whisper, Kokoro, etc.)
+- **Síntoma:** `RuntimeError: File model.bin is incomplete: failed to read a value of size 4 at position 0`.
+- **Causa raíz:** la caché HF usa symlinks `snapshots/ → blobs/`. Mover con `robocopy /MOVE`
+  rompió los symlinks dejándolos como archivos de **0 bytes** (los blobs con el contenido real
+  quedaron intactos). HF ve el archivo "presente" (0 bytes) y no lo re-valida.
+- **Fix:** borrar los punteros de 0 bytes bajo `hub\*\snapshots\*` (NO los blobs); al cargar el
+  modelo, `huggingface_hub` re-crea el enlace desde el blob existente (sin re-descargar).
+  Comando: `Get-ChildItem $hub -Recurse -File | ? {$_.Length -eq 0 -and $_.FullName -like '*\snapshots\*'} | Remove-Item`.
+- **Check preventivo:** para mover cachés HF, fijar `HF_HOME` ANTES de descargar, o mover con un
+  método que preserve symlinks; tras cualquier mudanza, correr un tool que cargue cada modelo y
+  verificar exit 0. `.env` del proyecto fija `HF_HOME`/`HF_HUB_CACHE`/`INSIGHTFACE_HOME`/`TORCH_HOME` a D:.
+- **Archivos:** `.env`, cachés en `D:\AI\`
 
 ---
 
