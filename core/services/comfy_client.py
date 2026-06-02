@@ -42,6 +42,17 @@ class ComfyClient:
             raise ComfyError(f"Nodo '{node_id}' no existe en el workflow.")
         node.setdefault("inputs", {})[key] = value
 
+    def upload_image(self, path: Path, *, overwrite: bool = True) -> str:
+        """Sube una imagen al input/ de ComfyUI y devuelve el nombre para LoadImage."""
+        with httpx.Client(timeout=120) as c:
+            files = {"image": (Path(path).name, Path(path).read_bytes(), "image/png")}
+            data = {"overwrite": "true" if overwrite else "false"}
+            r = c.post(f"{self.base_url}/upload/image", files=files, data=data)
+            r.raise_for_status()
+            j = r.json()
+        name = j["name"]
+        return f"{j['subfolder']}/{name}" if j.get("subfolder") else name
+
     # --- ejecución ---
     def submit(self, workflow: dict) -> str:
         with httpx.Client(timeout=30) as c:
