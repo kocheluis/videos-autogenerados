@@ -1,0 +1,31 @@
+# Estilo seleccionable para la generación (configurable desde la interfaz web).
+# "Crochet con matices": personajes de manualidad artesanal (crochet + felt + clay +
+# muñeco de polímero) en escenas miniatura cálidas y cinematográficas.
+
+name: crochet_con_matices
+label: "Crochet con matices"
+description: >
+  Personajes artesanales (tejido a crochet con acentos de lana afieltrada, plastilina y
+  muñeco de polímero) en escenarios miniatura realistas, luz cálida cinematográfica.
+
+# Texturas disponibles (combinables). La UI permite activar/ajustar peso de cada una.
+textures:
+  - { key: crochet,      label: "Crochet / tejido",      weight: 1.0, terms: "crocheted yarn, visible knit stitches, amigurumi" }
+  - { key: needle_felt,  label: "Lana afieltrada",        weight: 0.8, terms: "needle-felted wool, soft fuzzy fibers" }
+  - { key: claymation,   label: "Plastilina (claymation)",weight: 0.5, terms: "handmade clay sculpt, matte plasticine, stop-motion clay" }
+  - { key: polymer_doll, label: "Muñeco polímero/vinilo", weight: 0.4, terms: "soft polymer clay doll, smooth vinyl figurine" }
+base_texture: crochet
+
+# Lenguaje visual compartido (los "matices" que dan vida).
+look:
+  lighting: "warm golden cinematic lighting, soft, shallow depth of field, gentle bokeh, dust sparkles"
+  environment: "cozy realistic miniature room and handmade props, wooden surfaces"
+  mood: "tender, emotional parenting storytelling"
+palette: ["#d8a86a", "#a07655", "#664026", "#d0bb9e", "#c98a8a"]
+
+# Prompts derivados (el provider de imagen los compone).
+prompt_prefix: "adorable handmade craft character"
+negative_prompt: "photorealistic human skin, plastic, glossy cgi, text, watermark, extra fingers, harsh lighting, deformed"
+sampler: { steps: 30, cfg: 6.0, seed: 1234567 }
+
+captions: { style: word_by_word, color: "#ffffff", outline: true, position: lower_center }

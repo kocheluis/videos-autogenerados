@@ -33,7 +33,7 @@ class Brief(BaseModel):
 class Scene(BaseModel):
     idx: int
     narration_text: str          # lo que dice la voz en off (es)
-    image_prompt: str            # prompt visual (sin estilo; el estilo lo añade el bible)
+    image_prompt: str = ""       # prompt visual (sin estilo; el estilo lo añade el bible)
     motion_preset: str = "subtle_push_in"  # clave en bible.motion_presets
     duration_s: float = 5.0
     on_screen_note: str = ""     # nota opcional (no son los captions; esos salen del ASR)

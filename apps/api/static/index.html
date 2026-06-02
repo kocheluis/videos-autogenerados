@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Generador de Reels · Panel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<style>
+  body { background:#171210; color:#f3e9dd; }
+  .pulse { animation: p 1.2s ease-in-out infinite; } @keyframes p { 0%,100%{opacity:1} 50%{opacity:.45} }
+  ::-webkit-scrollbar{width:9px;height:9px} ::-webkit-scrollbar-thumb{background:#3c322c;border-radius:9px}
+  textarea{field-sizing:content}
+</style>
+</head>
+<body x-data="app()" x-init="init()" class="min-h-screen">
+<div class="flex h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="w-72 shrink-0 bg-[#211b18] border-r border-[#34291f] flex flex-col">
+    <div class="p-4 border-b border-[#34291f]">
+      <h1 class="text-lg font-bold">🧶 Reels Studio</h1>
+      <p class="text-xs text-amber-200/60">Generador self-hosted</p>
+    </div>
+    <div class="p-4 space-y-2 border-b border-[#34291f]">
+      <p class="text-xs uppercase tracking-wide text-amber-200/50">Nuevo video</p>
+      <input x-model="form.topic" placeholder="Tema del video…" class="w-full bg-[#171210] border border-[#34291f] rounded-lg px-3 py-2 text-sm">
+      <select x-model="form.style" class="w-full bg-[#171210] border border-[#34291f] rounded-lg px-3 py-2 text-sm">
+        <template x-for="s in styles" :key="s.name"><option :value="s.name" x-text="s.label"></option></template>
+      </select>
+      <div class="flex gap-2">
+        <input x-model="form.platforms" placeholder="youtube,instagram" class="flex-1 bg-[#171210] border border-[#34291f] rounded-lg px-3 py-2 text-xs">
+        <input x-model.number="form.duration" type="number" class="w-16 bg-[#171210] border border-[#34291f] rounded-lg px-2 py-2 text-xs">
+      </div>
+      <button @click="create()" :disabled="busy" class="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-50 rounded-lg py-2 text-sm font-semibold">Crear</button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-2">
+      <template x-for="p in projects" :key="p.slug">
+        <button @click="open(p.slug)" :class="cur && cur.slug===p.slug ? 'bg-[#34291f]' : 'hover:bg-[#2a221d]'" class="w-full text-left rounded-lg px-3 py-2 mb-1">
+          <div class="text-sm truncate" x-text="p.topic || p.slug"></div>
+          <div class="text-[10px] text-amber-200/40" x-text="p.stage || 'nuevo'"></div>
+        </button>
+      </template>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 overflow-y-auto" x-show="cur">
+    <div class="max-w-5xl mx-auto p-6 space-y-6" x-show="cur">
+      <header class="flex items-start justify-between">
+        <div>
+          <h2 class="text-xl font-bold" x-text="cur?.topic || cur?.slug"></h2>
+          <p class="text-xs text-amber-200/50">Estilo: <span x-text="cur?.style"></span> · <span x-text="cur?.slug"></span></p>
+        </div>
+        <span class="text-xs px-3 py-1 rounded-full border border-[#34291f]" x-text="'Etapa: '+(cur?.stage||'—')"></span>
+      </header>
+
+      <!-- Monitor por bloques -->
+      <section>
+        <p class="text-xs uppercase tracking-wide text-amber-200/50 mb-2">Pipeline</p>
+        <div class="flex flex-wrap gap-2">
+          <template x-for="(s,i) in (cur?.stages||[])" :key="s.key">
+            <div class="flex items-center">
+              <button @click="sel=s.key; loadLogs()" :class="blockColor(s)" class="rounded-xl px-3 py-2 text-xs border min-w-[120px] text-left transition" :title="s.key">
+                <div class="font-semibold" x-text="s.title"></div>
+                <div class="flex items-center gap-1 mt-0.5">
+                  <span x-text="badge(s)"></span>
+                  <span x-show="s.gate" class="text-[9px] px-1 rounded bg-black/30" x-text="s.approved?'✓ aprobada':'compuerta'"></span>
+                </div>
+              </button>
+              <span x-show="i < (cur.stages.length-1)" class="text-amber-200/30 px-1">→</span>
+            </div>
+          </template>
+        </div>
+        <div class="flex gap-2 mt-3">
+          <button @click="runStage(sel)" :disabled="!sel || busy" class="bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 rounded-lg px-3 py-1.5 text-xs">▶ Ejecutar <span x-text="sel"></span></button>
+          <template x-for="g in gates" :key="g.gate">
+            <button x-show="cur?.blocked_on===g.gate" @click="approveGate(g.gate)" class="bg-amber-600 hover:bg-amber-500 rounded-lg px-3 py-1.5 text-xs">✓ Aprobar compuerta: <span x-text="g.label"></span></button>
+          </template>
+        </div>
+      </section>
+
+      <!-- Guion (revisión humana + IA) -->
+      <section class="bg-[#211b18] border border-[#34291f] rounded-2xl p-4" x-show="cur?.script">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-semibold">📝 Guion <span class="text-xs text-amber-200/50" x-text="'· '+(cur?.script?.scenes?.length||0)+' escenas'"></span></h3>
+          <div class="flex gap-2">
+            <button @click="rewrite()" :disabled="busy" class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 rounded-lg px-3 py-1.5 text-xs">✨ Hacer más amigable (IA)</button>
+            <button @click="saveScript()" :disabled="busy" class="bg-[#34291f] hover:bg-[#3f3228] rounded-lg px-3 py-1.5 text-xs">💾 Guardar</button>
+            <button @click="approveGate('script')" class="bg-emerald-700 hover:bg-emerald-600 rounded-lg px-3 py-1.5 text-xs">✓ Aprobar guion</button>
+          </div>
+        </div>
+        <p class="text-sm font-medium" x-text="cur?.script?.title"></p>
+        <p class="text-xs italic text-amber-200/60 mb-3" x-text="cur?.script?.hook"></p>
+        <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
+          <template x-for="(sc,idx) in (cur?.script?.scenes||[])" :key="idx">
+            <div class="flex gap-2 items-start">
+              <span class="text-xs text-amber-200/40 mt-2 w-6" x-text="sc.idx"></span>
+              <textarea x-model="sc.narration_text" rows="2" class="flex-1 bg-[#171210] border border-[#34291f] rounded-lg px-3 py-2 text-sm"></textarea>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <!-- Previews -->
+      <section class="grid grid-cols-2 gap-4">
+        <div class="bg-[#211b18] border border-[#34291f] rounded-2xl p-4" x-show="cur?.has_character_sheet">
+          <h3 class="font-semibold text-sm mb-2">🎨 Personaje / estilo</h3>
+          <img :src="asset('bible/character_sheet.png')" class="rounded-xl max-h-72">
+        </div>
+        <div class="bg-[#211b18] border border-[#34291f] rounded-2xl p-4" x-show="cur?.has_video">
+          <h3 class="font-semibold text-sm mb-2">🎬 Video final</h3>
+          <video :src="asset('render/master_9x16.mp4')" controls class="rounded-xl max-h-72"></video>
+        </div>
+      </section>
+      <section class="bg-[#211b18] border border-[#34291f] rounded-2xl p-4" x-show="cur?.n_keyframes>0">
+        <h3 class="font-semibold text-sm mb-2">🖼️ Keyframes (<span x-text="cur?.n_keyframes"></span>)</h3>
+        <div class="grid grid-cols-6 gap-2">
+          <template x-for="sc in (cur?.script?.scenes||[])" :key="sc.idx">
+            <img :src="asset('scenes/'+String(sc.idx).padStart(2,'0')+'/keyframe.png')" class="rounded-lg aspect-[9/16] object-cover" onerror="this.style.display='none'">
+          </template>
+        </div>
+      </section>
+
+      <!-- Logs -->
+      <section class="bg-black/40 border border-[#34291f] rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-semibold text-sm">🪵 Logs <span class="text-xs text-amber-200/50" x-text="sel"></span></h3>
+          <label class="text-xs flex items-center gap-1"><input type="checkbox" x-model="autoLogs"> auto</label>
+        </div>
+        <pre class="text-[11px] leading-relaxed text-emerald-200/80 whitespace-pre-wrap max-h-64 overflow-y-auto" x-text="logText || '— sin logs —'"></pre>
+      </section>
+    </div>
+  </main>
+
+  <main class="flex-1 flex items-center justify-center text-amber-200/40" x-show="!cur">
+    <div class="text-center">
+      <div class="text-5xl mb-3">🧶</div>
+      <p>Crea o selecciona un proyecto para empezar</p>
+    </div>
+  </main>
+</div>
+
+<script>
+function app(){
+  return {
+    projects:[], styles:[], cur:null, sel:null, logText:'', busy:false, autoLogs:true,
+    form:{topic:'', style:'crochet_con_matices', platforms:'youtube', duration:150},
+    gates:[{gate:'script',label:'Guion'},{gate:'design',label:'Diseño'},{gate:'images',label:'Keyframes'},{gate:'final',label:'Video'}],
+    async init(){
+      this.styles = await (await fetch('/api/styles')).json();
+      if(this.styles[0]) this.form.style = this.styles[0].name;
+      await this.loadProjects();
+      setInterval(()=>{ if(this.cur) this.refresh(); }, 2500);
+      setInterval(()=>{ if(this.cur && this.sel && this.autoLogs) this.loadLogs(); }, 2500);
+    },
+    async loadProjects(){ this.projects = await (await fetch('/api/projects')).json(); },
+    async create(){
+      if(!this.form.topic) return; this.busy=true;
+      try{
+        const r = await (await fetch('/api/projects',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({topic:this.form.topic, style:this.form.style, duration:this.form.duration,
+          platforms:this.form.platforms.split(',').map(s=>s.trim()).filter(Boolean)})})).json();
+        await this.loadProjects(); await this.open(r.slug);
+        this.form.topic='';
+      } finally { this.busy=false; }
+    },
+    async open(slug){ this.cur = await (await fetch('/api/projects/'+slug)).json(); this.sel='s02_script'; this.loadLogs(); },
+    async refresh(){ if(!this.cur) return; const d = await (await fetch('/api/projects/'+this.cur.slug)).json(); this.cur = d; },
+    async runStage(stage){ if(!stage) return; this.busy=true;
+      try{ const r = await fetch('/api/projects/'+this.cur.slug+'/run/'+stage,{method:'POST'});
+        if(!r.ok){ alert((await r.json()).detail); } await this.refresh(); } finally { this.busy=false; } },
+    async approveGate(gate){ await fetch('/api/projects/'+this.cur.slug+'/approve/'+gate,{method:'POST'}); await this.refresh(); },
+    async saveScript(){ this.busy=true; try{
+      await fetch('/api/projects/'+this.cur.slug+'/script',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({script:this.cur.script})});
+    } finally { this.busy=false; } },
+    async rewrite(){ this.busy=true; try{
+      const r = await (await fetch('/api/projects/'+this.cur.slug+'/script/rewrite',{method:'POST'})).json();
+      if(r.script) this.cur.script = r.script;
+    } finally { this.busy=false; } },
+    async loadLogs(){ if(!this.cur||!this.sel) return; const r = await (await fetch('/api/projects/'+this.cur.slug+'/logs?stage='+this.sel)).json(); this.logText = r.log; },
+    asset(p){ return '/assets/'+this.cur.slug+'/'+p+'?t='+Date.now(); },
+    blockColor(s){ return {running:'bg-amber-600/30 border-amber-500 pulse', done:'bg-emerald-700/25 border-emerald-600',
+      blocked:'bg-rose-700/30 border-rose-500', pending:'bg-[#211b18] border-[#34291f] hover:border-amber-700'}[s.status]; },
+    badge(s){ return {running:'⏳ corriendo', done:'✅ listo', blocked:'⏸ esperando', pending:'· pendiente'}[s.status]; },
+  };
+}
+</script>
+</body>
+</html>
