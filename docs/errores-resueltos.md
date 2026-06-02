@@ -13,6 +13,7 @@ nuevo**, añade una entrada al final con la plantilla.
 | 004 | 2026-05-31 | caché HuggingFace (D:) | `model.bin incomplete` tras mover caché con robocopy (symlinks rotos) |
 | 005 | 2026-05-31 | .venv (torch) | ComfyUI requirements degradó torch a CPU (CUDA False) |
 | 006 | 2026-05-31 | s09_render (Remotion) | 404/EncodingError: assets en public/{slug}/{slug} (doble) |
+| 007 | 2026-06-01 | s08_align / s09_render | Subtítulos desincronizados (captions de un audio viejo) |
 
 ---
 
@@ -97,6 +98,22 @@ nuevo**, añade una entrada al final con la plantilla.
 - **Check preventivo:** la ruta física `render/public/<rel>` debe coincidir exactamente con
   `staticFile(rel)`. Probar con `--dry-run` y verificar 1 ruta antes del render completo.
 - **Archivos:** `core/pipeline/stages/s09_render.py`
+
+---
+
+## 007 — Subtítulos desincronizados / no coinciden con la voz
+- **Componente(s):** `core/pipeline/stages/s08_align.py`, `s09_render.py`
+- **Síntoma:** los subtítulos del video no son los de la voz y se cortan a la mitad
+  (captions hasta 32 s con audio de 65 s, y otro texto).
+- **Causa raíz:** se regeneró la voz (s07_tts) DESPUÉS de alinear (s08), dejando
+  `captions.json` obsoleto (de una versión anterior, más corta y con otro guion).
+- **Fix:** re-ejecutar `align_captions` sobre el audio actual; y **guard de frescura** en
+  s09_render que aborta si `captions.json` es más viejo que `narration.wav`.
+- **Check preventivo:** respetar el orden s07 (voz) → s08 (subtítulos) → s09 (render).
+  El run_batch/UI lo respeta; en ejecución manual, re-alinear tras regenerar la voz.
+  Mejora futura: alineación forzada del texto del guion (forced alignment) para subtítulos
+  con palabras EXACTAS del guion (el usuario ya tiene `mms-300m-forced-aligner` en caché).
+- **Archivos:** `core/pipeline/stages/s08_align.py`, `core/pipeline/stages/s09_render.py`
 
 ---
 

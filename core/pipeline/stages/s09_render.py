@@ -91,6 +91,17 @@ def _build_props(ctx: ProjectContext, script: Script) -> dict:
 
 def run(ctx: ProjectContext, *, dry_run: bool = False) -> dict:
     script = Script(**json.loads((ctx.script_dir / "script.json").read_text(encoding="utf-8")))
+
+    # Guard de frescura: nunca renderizar con subtítulos más viejos que el audio
+    # (si se regeneró la voz, hay que re-alinear primero). Evita el desfase de captions.
+    wav = ctx.audio_dir / "narration.wav"
+    caps = ctx.subtitles_dir / "captions.json"
+    if wav.exists() and caps.exists() and caps.stat().st_mtime < wav.stat().st_mtime - 1:
+        raise RuntimeError(
+            "captions.json es más viejo que narration.wav: re-ejecuta align_captions (s08) "
+            "antes del render para que los subtítulos coincidan con la voz."
+        )
+
     ctx.render_dir.mkdir(parents=True, exist_ok=True)
     props = _build_props(ctx, script)
     props_path = ctx.render_dir / "props.json"

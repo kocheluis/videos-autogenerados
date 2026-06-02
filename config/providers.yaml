@@ -33,16 +33,16 @@ image:
     consistency: pulid
 
 i2v:
-  provider: comfyui_ltx            # primario por velocidad
-  comfyui_ltx:
-    license: { name: "LTX Community (<$10M)", commercial: true, source: "Lightricks/LTX-Video" }
-    workflow: tools/comfy_graphs/scene_i2v_ltx.json
-    model: "ltx-video.safetensors"
-    frames: 100                    # ~4 s @ 25 fps
-  comfyui_wan:                     # fallback por calidad de movimiento
+  provider: comfyui_wan            # PRIMARIO: Apache 2.0 + mejor movimiento (validado para 12GB)
+  comfyui_wan:
     license: { name: "Apache-2.0", commercial: true, source: "Wan-AI/Wan2.2-TI2V-5B" }
     workflow: tools/comfy_graphs/scene_i2v_wan.json
     model: "wan2.2-ti2v-5b.safetensors"
+    frames: 100                    # ~4 s @ 25 fps
+  comfyui_ltx:                     # alternativa: ~18x más rápido (modo borrador)
+    license: { name: "LTX Community (<$10M)", commercial: true, source: "Lightricks/LTX-Video" }
+    workflow: tools/comfy_graphs/scene_i2v_ltx.json
+    model: "ltx-video.safetensors"
 
 upscale:
   provider: realesrgan
