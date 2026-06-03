@@ -53,5 +53,9 @@ class ComfyUIWanProvider(I2VProvider):
         self.client.refresh()  # ComfyUI debe reconocer los modelos de Wan
         entry = self.client.wait(self.client.submit(wf), timeout=2400)
         self.client.download_outputs(entry, out_path)
-        self.client.free()
+        # NO liberar aquí: en un batch (s05_i2v) el modelo se mantiene cargado entre
+        # escenas para no recargarlo cada vez. La etapa libera la VRAM al final.
         return out_path
+
+    def free(self) -> None:
+        self.client.free()

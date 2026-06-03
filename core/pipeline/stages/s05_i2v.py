@@ -20,14 +20,17 @@ def run(ctx: ProjectContext) -> dict:
     i2v = get_provider("i2v", cfg=ctx.cfg)
 
     clips = []
-    for scene in script.scenes:
-        sd = ctx.scene_dir(scene.idx)
-        motion = bible.motion_presets.get(scene.motion_preset, scene.motion_preset)
-        with gpu_lock():
+    with gpu_lock():  # un solo lock para todo el batch: el modelo se mantiene cargado
+        for scene in script.scenes:
+            sd = ctx.scene_dir(scene.idx)
+            motion = bible.motion_presets.get(scene.motion_preset, scene.motion_preset)
+            motion = f"{motion}, cozy, no people, no hands"
             out = i2v.animate(
                 sd / "keyframe.png", motion, seconds=scene.duration_s, out_path=sd / "clip.mp4"
             )
-        clips.append(str(out))
+            clips.append(str(out))
+        if hasattr(i2v, "free"):
+            i2v.free()  # liberar VRAM al terminar el batch
 
     state = ctx.load_state()
     state.update({"stage": "s05_i2v", "clips": clips})
