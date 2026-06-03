@@ -18,9 +18,10 @@ palette:
 - '#515c5a'
 - '#d0bb9e'
 style_lock:
-  description: needle-felted wool / crochet amigurumi characters, soft yarn texture,
-    rosy cheeks, warm cinematic lighting, shallow depth of field, with glowing 3D
-    anatomical inserts and golden particles
+  description: a charming needle-felted wool doll character with humanoid body proportions,
+    highly detailed soft felt skin texture with freckles, big expressive eyes, knitted
+    fabric clothing, full body, in a realistic cozy room, warm cinematic lighting, shallow
+    depth of field, professional photography, stop-motion film aesthetic
 captions:
   style: word_by_word
   color: '#ffffff'
