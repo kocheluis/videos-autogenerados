@@ -21,7 +21,7 @@ class ComfyUIFluxSchnellProvider(ImageProvider):
     def __init__(self, *, options: dict[str, Any], cfg: Config):
         self.cfg = cfg
         self.options = options
-        self.checkpoint = options.get("checkpoint", "flux1-schnell-fp8.safetensors")
+        self.checkpoint = options.get("checkpoint", "flux1-schnell-Q4_K_S.gguf")
         wf = options.get("workflow", "tools/comfy_graphs/scene_image_flux_schnell.json")
         self.workflow = (ROOT / wf) if not Path(wf).is_absolute() else Path(wf)
         self.client = ComfyClient(cfg)
@@ -37,8 +37,9 @@ class ComfyUIFluxSchnellProvider(ImageProvider):
         w = self.cfg.settings["video"]["master"]["width"]
         h = self.cfg.settings["video"]["master"]["height"]
         overrides = {
-            "checkpoint": {"ckpt_name": self.checkpoint},
+            "unet": {"unet_name": self.checkpoint},
             "pos": {"text": positive},
+            "latent": {"width": 832, "height": 1472},
             "sampler": {"seed": int(seed) % (2**32)},
         }
         from PIL import Image
