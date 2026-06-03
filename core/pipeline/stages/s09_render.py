@@ -61,10 +61,14 @@ def _build_props(ctx: ProjectContext, script: Script) -> dict:
     scenes: list[dict] = []
     for s in script.scenes:
         sd = ctx.scene_dir(s.idx)
-        clip = sd / "clip_1080.mp4"
-        key = sd / "keyframe.png"
-        if clip.exists():
-            rel = _stage(clip, public_root, f"{ctx.slug}/scenes/{s.idx:02d}/clip.mp4")
+        clip_hi = sd / "clip_1080.mp4"     # i2v + upscale
+        clip_lo = sd / "clip.mp4"          # i2v sin upscale (Remotion reescala)
+        key = sd / "keyframe.png"          # fallback: imagen con Ken Burns
+        if clip_hi.exists():
+            rel = _stage(clip_hi, public_root, f"{ctx.slug}/scenes/{s.idx:02d}/clip.mp4")
+            is_video = True
+        elif clip_lo.exists():
+            rel = _stage(clip_lo, public_root, f"{ctx.slug}/scenes/{s.idx:02d}/clip.mp4")
             is_video = True
         elif key.exists():
             rel = _stage(key, public_root, f"{ctx.slug}/scenes/{s.idx:02d}/keyframe.png")

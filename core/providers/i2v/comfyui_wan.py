@@ -50,6 +50,7 @@ class ComfyUIWanProvider(I2VProvider):
                 self.client.set_input(wf, nid, k, v)
 
         out_path.parent.mkdir(parents=True, exist_ok=True)
+        self.client.refresh()  # ComfyUI debe reconocer los modelos de Wan
         entry = self.client.wait(self.client.submit(wf), timeout=2400)
         self.client.download_outputs(entry, out_path)
         self.client.free()

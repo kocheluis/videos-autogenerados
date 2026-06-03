@@ -14,6 +14,7 @@ nuevo**, añade una entrada al final con la plantilla.
 | 005 | 2026-05-31 | .venv (torch) | ComfyUI requirements degradó torch a CPU (CUDA False) |
 | 006 | 2026-05-31 | s09_render (Remotion) | 404/EncodingError: assets en public/{slug}/{slug} (doble) |
 | 007 | 2026-06-01 | s08_align / s09_render | Subtítulos desincronizados (captions de un audio viejo) |
+| 008 | 2026-06-02 | comfyui_wan / comfy_client / providers.yaml | i2v 400 `value_not_in_list` (modelo no reconocido / nombre erróneo) |
 
 ---
 
@@ -114,6 +115,21 @@ nuevo**, añade una entrada al final con la plantilla.
   Mejora futura: alineación forzada del texto del guion (forced alignment) para subtítulos
   con palabras EXACTAS del guion (el usuario ya tiene `mms-300m-forced-aligner` en caché).
 - **Archivos:** `core/pipeline/stages/s08_align.py`, `core/pipeline/stages/s09_render.py`
+
+---
+
+## 008 — i2v Wan: ComfyUI 400 `value_not_in_list` (modelo no encontrado)
+- **Componente(s):** `core/providers/i2v/comfyui_wan.py`, `core/services/comfy_client.py`, `config/providers.yaml`
+- **Síntoma:** al generar i2v, ComfyUI rechaza el workflow con HTTP 400 `prompt_outputs_failed_validation`
+  → `unet_name: 'wan2.2-ti2v-5b.safetensors' not in [...]`.
+- **Causa raíz (doble):** (a) los modelos agregados DESPUÉS de arrancar ComfyUI no se reconocen
+  hasta refrescar `/object_info`; (b) el `model` en providers.yaml (`wan2.2-ti2v-5b.safetensors`)
+  NO coincidía con el archivo real (`wan2.2_ti2v_5B_fp16.safetensors`), y el provider lo sobreescribía.
+- **Fix:** `ComfyClient.refresh()` (GET /object_info de los loaders) antes de cada submit; y corregir
+  el nombre EXACTO en providers.yaml. `submit()` ahora muestra el cuerpo del 400 para diagnosticar.
+- **Check preventivo:** el nombre del modelo en config debe coincidir EXACTO con el archivo en
+  ComfyUI/models. Tras añadir modelos, refrescar object_info (el provider ya lo hace).
+- **Archivos:** `core/providers/i2v/comfyui_wan.py`, `core/services/comfy_client.py`, `config/providers.yaml`
 
 ---
 

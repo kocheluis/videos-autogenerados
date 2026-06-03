@@ -53,11 +53,24 @@ class ComfyClient:
         name = j["name"]
         return f"{j['subfolder']}/{name}" if j.get("subfolder") else name
 
+    def refresh(self) -> None:
+        """Fuerza a ComfyUI a re-escanear las carpetas de modelos (reconoce los nuevos).
+
+        Necesario si se agregaron modelos DESPUÉS de arrancar ComfyUI; si no, los loaders
+        rechazan el workflow con 400 (nombre de modelo no listado)."""
+        try:
+            with httpx.Client(timeout=30) as c:
+                for node in ("UNETLoader", "CheckpointLoaderSimple", "CLIPLoader", "VAELoader"):
+                    c.get(f"{self.base_url}/object_info/{node}")
+        except Exception:
+            pass
+
     # --- ejecución ---
     def submit(self, workflow: dict) -> str:
         with httpx.Client(timeout=30) as c:
             r = c.post(f"{self.base_url}/prompt", json={"prompt": workflow, "client_id": self.client_id})
-            r.raise_for_status()
+            if r.status_code >= 400:
+                raise ComfyError(f"ComfyUI {r.status_code} al encolar: {r.text[:600]}")
             data = r.json()
         prompt_id = data.get("prompt_id")
         if not prompt_id:
@@ -106,6 +119,7 @@ class ComfyClient:
         for node_id, kv in overrides.items():
             for key, value in kv.items():
                 self.set_input(wf, node_id, key, value)
+        self.refresh()
         entry = self.wait(self.submit(wf))
         return self.download_outputs(entry, out_path)
 
