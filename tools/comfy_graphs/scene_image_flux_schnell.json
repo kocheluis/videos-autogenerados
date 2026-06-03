@@ -1,0 +1,38 @@
+{
+  "checkpoint": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": { "ckpt_name": "flux1-schnell-fp8.safetensors" }
+  },
+  "pos": {
+    "class_type": "CLIPTextEncode",
+    "inputs": { "text": "a needle-felted wool doll character", "clip": ["checkpoint", 1] }
+  },
+  "guidance": {
+    "class_type": "FluxGuidance",
+    "inputs": { "conditioning": ["pos", 0], "guidance": 3.5 }
+  },
+  "neg": {
+    "class_type": "CLIPTextEncode",
+    "inputs": { "text": "", "clip": ["checkpoint", 1] }
+  },
+  "latent": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": { "width": 832, "height": 1472, "batch_size": 1 }
+  },
+  "sampler": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": ["checkpoint", 0], "seed": 1234567, "steps": 4, "cfg": 1.0,
+      "sampler_name": "euler", "scheduler": "simple", "denoise": 1.0,
+      "positive": ["guidance", 0], "negative": ["neg", 0], "latent_image": ["latent", 0]
+    }
+  },
+  "decode": {
+    "class_type": "VAEDecode",
+    "inputs": { "samples": ["sampler", 0], "vae": ["checkpoint", 2] }
+  },
+  "save": {
+    "class_type": "SaveImage",
+    "inputs": { "filename_prefix": "flux_keyframe", "images": ["decode", 0] }
+  }
+}

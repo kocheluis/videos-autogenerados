@@ -68,14 +68,21 @@ class Character(BaseModel):
 
 
 class StyleLock(BaseModel):
-    # Look de material del referente: lana afieltrada / crochet amigurumi.
+    # Look del referente: muñeco de fieltro HUMANOIDE con piel afieltrada detallada.
     description: str = (
-        "needle-felted wool / crochet amigurumi, soft yarn texture, rosy cheeks, "
-        "warm cinematic lighting, shallow depth of field, cozy storybook"
+        "a charming needle-felted wool doll character with humanoid body proportions, "
+        "highly detailed soft felt skin texture with freckles, big expressive eyes, "
+        "knitted fabric clothing, full body, standing, in a realistic cozy room, "
+        "warm cinematic lighting, shallow depth of field, professional photography, "
+        "stop-motion film aesthetic, intricate handmade detail"
     )
     prompt_prefix: str = ""
     prompt_suffix: str = ""
-    negative_prompt: str = "photorealistic, plastic, text, watermark, extra fingers"
+    negative_prompt: str = (
+        "extra arms, extra limbs, extra legs, fused limbs, too many fingers, deformed, "
+        "mutated, malformed, disfigured, blurry, low quality, flat, simple, smooth plastic, "
+        "glossy cgi, text, watermark, signature"
+    )
     steps: int = 25
     guidance: float = 3.5
     seed: int = 1234567

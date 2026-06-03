@@ -14,7 +14,7 @@ llm:
     temperature: 0.7
 
 image:
-  provider: comfyui_sdxl            # PRIMARIO comercial (OpenRAIL++, LoRA más maduro)
+  provider: comfyui_flux_schnell    # PRIMARIO: humanoide + textura de piel (Apache 2.0)
   comfyui_sdxl:
     license: { name: "OpenRAIL++-M", commercial: true, source: "stabilityai/stable-diffusion-xl-base-1.0" }
     workflow: tools/comfy_graphs/scene_image_sdxl.json          # base text2img (InstantID/LoRA: fase siguiente)
@@ -28,8 +28,7 @@ image:
   comfyui_flux_schnell:
     license: { name: "Apache-2.0", commercial: true, source: "black-forest-labs/FLUX.1-schnell" }
     workflow: tools/comfy_graphs/scene_image_flux_schnell.json
-    checkpoint: "flux1-schnell.safetensors"
-    style_lora: "needle_felt_crochet_flux.safetensors"
+    checkpoint: "flux1-schnell-fp8.safetensors"   # all-in-one fp8 (nombre EXACTO)
     consistency: pulid
 
 i2v:
